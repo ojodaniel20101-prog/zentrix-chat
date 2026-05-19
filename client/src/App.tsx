@@ -9,15 +9,13 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ChatProvider } from "./contexts/ChatContext";
-import LoadingScreen from "./components/LoadingScreen";
 import Auth from "./pages/Auth";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 // Protected route wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
+  const { user } = useAuth();
   if (!user) return <Redirect to="/auth" />;
   return (
     <ChatProvider>
@@ -28,8 +26,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
 // Public route (redirect to / if already logged in)
 function PublicRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
+  const { user } = useAuth();
   if (user) return <Redirect to="/" />;
   return <Component />;
 }

@@ -100,7 +100,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0c10] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="w-full h-full bg-[#0a0c10] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
@@ -112,7 +112,7 @@ export default function Auth() {
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-        className="w-full max-w-md relative z-10"
+        className="w-full max-w-md relative z-10 max-h-[90vh] overflow-y-auto"
       >
         {/* Logo */}
         <div className="text-center mb-8">

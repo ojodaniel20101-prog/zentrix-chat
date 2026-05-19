@@ -241,7 +241,7 @@ export default function ChatSidebar() {
       {/* Expanded Panel */}
       <div className="flex-1 flex flex-col bg-[#12151e] min-w-0">
         {/* Header */}
-        <div className="px-4 pt-4 pb-3 border-b border-white/5">
+        <div className="px-3 sm:px-4 pt-4 pb-3 border-b border-white/5 min-w-0">
           <div className="flex items-center justify-between mb-3">
             <h2
               className="text-lg font-bold text-white"
@@ -295,7 +295,7 @@ export default function ChatSidebar() {
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-2 space-y-0.5 scrollbar-thin min-w-0">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 px-3 py-2.5">

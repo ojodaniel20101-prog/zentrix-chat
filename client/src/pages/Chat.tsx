@@ -23,7 +23,7 @@ export default function Chat() {
   const { chat } = useChatData(activeChatId);
 
   return (
-    <div className="h-screen flex bg-[#0a0c10] overflow-hidden">
+    <div className="w-full h-full flex bg-[#0a0c10] overflow-hidden">
       {/* Sidebar — hidden on mobile when chat is open */}
       <div
         className={`${

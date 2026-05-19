@@ -103,7 +103,7 @@ const MessageBubble = ({
         </div>
       )}
 
-      <div className={`max-w-[70%] ${isSent ? "items-end" : "items-start"} flex flex-col`}>
+      <div className={`max-w-[85%] sm:max-w-[70%] ${isSent ? "items-end" : "items-start"} flex flex-col`}>
         {/* Sender name in groups */}
         {!isSent && isGroup && senderName && (
           <span className="text-xs text-blue-400 mb-1 px-1 font-medium" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -367,7 +367,7 @@ export default function ChatWindow({ chat }: Props) {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-[#12151e] border-b border-white/5 flex-shrink-0">
+      <div className="flex items-center gap-3 px-3 sm:px-4 py-3 bg-[#12151e] border-b border-white/5 flex-shrink-0 min-w-0">
         <button
           onClick={() => setActiveChatId(null)}
           className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -429,7 +429,7 @@ export default function ChatWindow({ chat }: Props) {
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-0.5"
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-0.5 min-w-0"
         style={{
           backgroundImage: `radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.03) 0%, transparent 50%), 
                            radial-gradient(circle at 80% 20%, rgba(124, 58, 237, 0.03) 0%, transparent 50%)`,
@@ -550,7 +550,7 @@ export default function ChatWindow({ chat }: Props) {
       </AnimatePresence>
 
       {/* Input Area */}
-      <div className="px-4 pb-4 pt-2 flex-shrink-0 bg-[#0f1520]">
+      <div className="px-3 sm:px-4 pb-4 pt-2 flex-shrink-0 bg-[#0f1520] min-w-0">
         <AnimatePresence mode="wait">
           {showVoiceRecorder ? (
             <motion.div
