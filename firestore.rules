@@ -1,0 +1,112 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isChatMember(chatId) {
+      return isAuthenticated() &&
+        request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+    }
+
+    function isChatAdmin(chatId) {
+      return isAuthenticated() &&
+        request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.admins;
+    }
+
+    // ─── Users Collection ────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Anyone authenticated can read user profiles (for search by username)
+      allow read: if isAuthenticated();
+
+      // Only the user themselves can create or update their profile
+      allow create: if isOwner(userId) &&
+        request.resource.data.keys().hasAll(['uid', 'username', 'displayName', 'email', 'online', 'createdAt']) &&
+        request.resource.data.uid == userId;
+
+      allow update: if isOwner(userId) &&
+        // Prevent changing uid and email
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email;
+
+      allow delete: if false; // Users cannot be deleted via client
+    }
+
+    // ─── Chats Collection ────────────────────────────────────────────────────
+    match /chats/{chatId} {
+      // Only chat members can read chat data
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.members;
+
+      // Any authenticated user can create a chat (they must include themselves)
+      allow create: if isAuthenticated() &&
+        request.auth.uid in request.resource.data.members &&
+        request.resource.data.members.size() >= 2 &&
+        request.resource.data.members.size() <= 256;
+
+      // Only members can update chat metadata
+      // For group chats, only admins can update name/photo
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.members &&
+        (
+          // Direct chats: any member can update (e.g., lastMessage, unreadCount)
+          resource.data.type == 'direct' ||
+          // Group chats: admin-only fields require admin role
+          (resource.data.type == 'group' && (
+            // Non-structural updates (lastMessage, unreadCount) by any member
+            !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['name', 'photoURL', 'admins', 'members']) ||
+            // Structural updates require admin
+            request.auth.uid in resource.data.admins
+          ))
+        );
+
+      allow delete: if false; // Chats are not deleted via client
+
+      // ─── Messages Subcollection ─────────────────────────────────────────
+      match /messages/{messageId} {
+        // Only chat members can read messages
+        allow read: if isChatMember(chatId);
+
+        // Only chat members can send messages
+        allow create: if isChatMember(chatId) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.keys().hasAll(['senderId', 'type', 'timestamp']) &&
+          request.resource.data.type in ['text', 'image', 'file', 'voice'];
+
+        // Members can update read receipts; only sender can edit text
+        allow update: if isChatMember(chatId) &&
+          (
+            // Updating readBy/deliveredTo (read receipts) — any member
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['readBy', 'deliveredTo', 'status']) ||
+            // Soft-delete — only sender
+            (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted']) &&
+             resource.data.senderId == request.auth.uid)
+          );
+
+        allow delete: if false; // Messages are soft-deleted
+      }
+    }
+
+    // ─── Notifications Collection ─────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() &&
+        resource.data.recipientId == request.auth.uid;
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.senderId == request.auth.uid;
+
+      allow update, delete: if isAuthenticated() &&
+        resource.data.recipientId == request.auth.uid;
+    }
+  }
+}

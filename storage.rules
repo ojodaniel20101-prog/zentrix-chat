@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB max
+    }
+
+    function isValidFile() {
+      return request.resource.size < 50 * 1024 * 1024; // 50MB max
+    }
+
+    function isValidAudio() {
+      return request.resource.contentType.matches('audio/.*') &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB max
+    }
+
+    // ─── Avatar Uploads ──────────────────────────────────────────────────────
+    match /avatars/{userId}.{ext} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isOwner(userId) && isValidImage();
+    }
+
+    // ─── Chat Media ──────────────────────────────────────────────────────────
+    match /chats/{chatId}/images/{imageId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidImage();
+    }
+
+    match /chats/{chatId}/files/{fileId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidFile();
+    }
+
+    match /chats/{chatId}/voice/{voiceId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidAudio();
+    }
+  }
+}
