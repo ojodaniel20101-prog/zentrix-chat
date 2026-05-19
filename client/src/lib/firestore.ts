@@ -84,13 +84,13 @@ export const getUserByUsername = async (username: string) => {
   const q = query(usersCol(), where("username", "==", username.toLowerCase()));
   const snap = await getDocs(q);
   if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() } as UserProfile;
+  return { id: snap.docs[0].id, ...snap.docs[0].data() } as unknown as UserProfile;
 };
 
 export const getUserById = async (uid: string) => {
   const snap = await getDoc(doc(db, "users", uid));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...snap.data() } as UserProfile;
+  return { id: snap.id, ...snap.data() } as unknown as UserProfile;
 };
 
 export const updateUserPresence = async (uid: string, online: boolean) => {
