@@ -1,5 +1,5 @@
 {
   "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build",
-  "outputDirectory": "dist",
+  "outputDirectory": "../dist/public",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
