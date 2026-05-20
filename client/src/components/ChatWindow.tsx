@@ -550,7 +550,7 @@ export default function ChatWindow({ chat }: Props) {
       </AnimatePresence>
 
       {/* Input Area */}
-      <div className="px-3 sm:px-4 pb-4 pt-2 flex-shrink-0 bg-[#0f1520] min-w-0">
+      <div className="px-3 sm:px-4 pb-4 md:pb-4 pt-2 flex-shrink-0 bg-[#0f1520] min-w-0">
         <AnimatePresence mode="wait">
           {showVoiceRecorder ? (
             <motion.div

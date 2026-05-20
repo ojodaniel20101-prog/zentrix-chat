@@ -2,7 +2,7 @@
 // Assembles sidebar + chat window with responsive mobile layout
 
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useChat as useChatData } from "@/hooks/useChats";
@@ -16,29 +16,23 @@ export default function Chat() {
   const { profile } = useAuth();
   const {
     activeChatId,
+    setActiveChatId,
     showNewChatDialog,
     showNewGroupDialog,
     showProfileDialog,
+    setShowProfileDialog,
   } = useChat();
   const { chat } = useChatData(activeChatId);
 
   return (
-    <div className="w-full h-full flex bg-[#0a0c10] overflow-hidden">
-      {/* Sidebar — hidden on mobile when chat is open */}
-      <div
-        className={`${
-          activeChatId ? "hidden md:flex" : "flex"
-        } w-full md:w-[360px] lg:w-[400px] flex-shrink-0 border-r border-white/5`}
-      >
+    <div className="w-full h-full flex flex-col md:flex-row bg-[#0a0c10] overflow-hidden">
+      {/* Sidebar — hidden on mobile, shown on tablet+ */}
+      <div className="hidden md:flex md:w-[360px] lg:w-[400px] flex-shrink-0 border-r border-white/5 flex-col">
         <ChatSidebar />
       </div>
 
-      {/* Chat Area */}
-      <div
-        className={`${
-          activeChatId ? "flex" : "hidden md:flex"
-        } flex-1 flex-col min-w-0`}
-      >
+      {/* Chat Area — full width on mobile */}
+      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         <AnimatePresence mode="wait">
           {chat ? (
             <motion.div
@@ -66,7 +60,7 @@ export default function Chat() {
                   <span className="text-white text-xs font-bold">Z</span>
                 </div>
               </div>
-              <div className="text-center">
+              <div className="text-center px-4">
                 <h2
                   className="text-xl font-bold text-white mb-2"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
@@ -97,6 +91,26 @@ export default function Chat() {
         {showNewGroupDialog && <NewGroupDialog />}
         {showProfileDialog && <ProfileDialog />}
       </AnimatePresence>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#12151e] border-t border-white/5 flex items-center justify-around px-2 z-40">
+        <button
+          onClick={() => setActiveChatId(null)}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
+            !activeChatId ? "text-blue-400" : "text-slate-400 hover:text-white"
+          }`}
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-xs font-medium">Chats</span>
+        </button>
+        <button
+          onClick={() => setShowProfileDialog(true)}
+          className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-slate-400 hover:text-white transition-colors"
+        >
+          <User className="w-5 h-5" />
+          <span className="text-xs font-medium">Profile</span>
+        </button>
+      </div>
     </div>
   );
 }
