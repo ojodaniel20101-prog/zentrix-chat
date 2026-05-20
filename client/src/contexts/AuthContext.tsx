@@ -70,7 +70,7 @@ const ensureUniqueUsername = async (base: string): Promise<string> => {
 };
 
 // Retry a Firestore operation up to `retries` times with a delay.
-const withRetry = async <T>(
+const withRetry = async <T,>(
   fn: () => Promise<T>,
   retries = 4,
   delayMs = 800
