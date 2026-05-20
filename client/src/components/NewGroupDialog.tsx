@@ -6,12 +6,14 @@ import { X, Search, Loader2, Users, Plus, Trash2 } from "lucide-react";
 import { getUserByUsername, createGroupChat } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
+import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
 import type { UserProfile } from "@/lib/firestore";
 
 export default function NewGroupDialog() {
   const { user } = useAuth();
   const { setShowNewGroupDialog, setActiveChatId } = useChat();
+  const isMobile = useIsMobile();
   const [groupName, setGroupName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
@@ -68,6 +70,11 @@ export default function NewGroupDialog() {
       const chatId = await createGroupChat(groupName.trim(), allMembers, user.uid);
       setActiveChatId(chatId);
       setShowNewGroupDialog(false);
+      // Reset state after creating group
+      setGroupName("");
+      setSearchQuery("");
+      setSearchResult(null);
+      setMembers([]);
       toast.success(`Group "${groupName}" created!`);
     } catch {
       toast.error("Failed to create group");
@@ -77,7 +84,8 @@ export default function NewGroupDialog() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`${isMobile ? "w-full h-full" : "fixed inset-0 z-50"} flex items-center justify-center p-4`}>
+      {!isMobile && (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -85,12 +93,13 @@ export default function NewGroupDialog() {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setShowNewGroupDialog(false)}
       />
+      )}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-        className="relative w-full max-w-md bg-[#12151e] border border-white/10 rounded-2xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+        className={`relative w-full ${isMobile ? "h-full max-w-none rounded-none" : "max-w-md rounded-2xl"} bg-[#12151e] border ${isMobile ? "border-0" : "border-white/10"} p-6 shadow-2xl z-10 overflow-y-auto flex flex-col`}
       >
         <div className="flex items-center justify-between mb-6">
           <h2
@@ -108,7 +117,7 @@ export default function NewGroupDialog() {
         </div>
 
         {/* Group name */}
-        <div className="mb-4">
+        <div className="mb-4 flex-shrink-0">
           <label className="text-slate-300 text-sm mb-1.5 block" style={{ fontFamily: "'DM Sans', sans-serif" }}>
             Group Name
           </label>
@@ -122,7 +131,7 @@ export default function NewGroupDialog() {
         </div>
 
         {/* Add members */}
-        <div className="mb-4">
+        <div className="mb-4 flex-shrink-0">
           <label className="text-slate-300 text-sm mb-1.5 block" style={{ fontFamily: "'DM Sans', sans-serif" }}>
             Add Members
           </label>
@@ -140,12 +149,13 @@ export default function NewGroupDialog() {
             <button
               onClick={handleSearch}
               disabled={searching || !searchQuery.trim()}
-              className="px-3 py-2.5 bg-white/10 text-slate-300 rounded-xl text-sm disabled:opacity-50 hover:bg-white/20 transition-colors"
+              className="px-3 py-2.5 bg-white/10 text-slate-300 rounded-xl text-sm disabled:opacity-50 hover:bg-white/20 transition-colors flex-shrink-0"
             >
               {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </button>
           </div>
 
+          <div className="flex-1 overflow-y-auto">
           <AnimatePresence>
             {searchResult && (
               <motion.div
@@ -186,11 +196,12 @@ export default function NewGroupDialog() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
 
         {/* Members list */}
         {members.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-6 flex-shrink-0 border-t border-white/5 pt-4">
             <p className="text-slate-400 text-xs mb-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>
               {members.length} member{members.length !== 1 ? "s" : ""} added
             </p>
@@ -230,7 +241,7 @@ export default function NewGroupDialog() {
         <button
           onClick={handleCreate}
           disabled={creating || !groupName.trim() || members.length < 1}
-          className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 flex-shrink-0 mt-4"
           style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           {creating ? (

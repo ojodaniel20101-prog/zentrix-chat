@@ -6,12 +6,14 @@ import { Search, X, Loader2, MessageSquare } from "lucide-react";
 import { getUserByUsername, getOrCreateDirectChat } from "@/lib/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
+import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
 import type { UserProfile } from "@/lib/firestore";
 
 export default function NewChatDialog() {
   const { user } = useAuth();
   const { setShowNewChatDialog, setActiveChatId } = useChat();
+  const isMobile = useIsMobile();
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<UserProfile | null | "not-found">(null);
@@ -41,26 +43,31 @@ export default function NewChatDialog() {
       const chatId = await getOrCreateDirectChat(user.uid, result.uid);
       setActiveChatId(chatId);
       setShowNewChatDialog(false);
+      // Reset state after starting chat
+      setQuery("");
+      setResult(null);
     } catch {
       toast.error("Failed to start chat");
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <motion.div
+    <div className={`${isMobile ? "w-full h-full" : "fixed inset-0 z-50"} flex items-center justify-center p-4`}>
+      {!isMobile && (
+        <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setShowNewChatDialog(false)}
       />
+      )}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-        className="relative w-full max-w-md bg-[#12151e] border border-white/10 rounded-2xl p-6 shadow-2xl z-10"
+        className={`relative w-full ${isMobile ? "h-full max-w-none rounded-none" : "max-w-md rounded-2xl"} bg-[#12151e] border ${isMobile ? "border-0" : "border-white/10"} p-6 shadow-2xl z-10 overflow-y-auto flex flex-col`}
       >
         <div className="flex items-center justify-between mb-6">
           <h2
@@ -81,7 +88,7 @@ export default function NewChatDialog() {
           Search for a user by their @username to start a conversation.
         </p>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-mono">@</span>
             <input
@@ -103,6 +110,7 @@ export default function NewChatDialog() {
           </button>
         </div>
 
+        <div className="flex-1 overflow-y-auto">
         <AnimatePresence>
           {result && (
             <motion.div
@@ -152,6 +160,7 @@ export default function NewChatDialog() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </motion.div>
     </div>
   );

@@ -1,11 +1,13 @@
 // Obsidian Flow Design — Main Chat Page
 // Assembles sidebar + chat window with responsive mobile layout
 
+import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageSquare, User } from "lucide-react";
+import { MessageSquare, User, Search, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useChat as useChatData } from "@/hooks/useChats";
+import { useIsMobile } from "@/hooks/useMobile";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatWindow from "@/components/ChatWindow";
 import NewChatDialog from "@/components/NewChatDialog";
@@ -14,6 +16,7 @@ import ProfileDialog from "@/components/ProfileDialog";
 
 export default function Chat() {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const {
     activeChatId,
     setActiveChatId,
@@ -23,6 +26,14 @@ export default function Chat() {
     setShowProfileDialog,
   } = useChat();
   const { chat } = useChatData(activeChatId);
+  const [mobileTab, setMobileTab] = React.useState<"chats" | "search" | "groups" | "profile">("chats");
+  
+  // Handle back button on mobile when viewing a chat
+  React.useEffect(() => {
+    if (activeChatId && isMobile) {
+      setMobileTab("chats");
+    }
+  }, [activeChatId, isMobile]);
 
   return (
     <div className="w-full h-full flex flex-col md:flex-row bg-[#0a0c10] overflow-hidden">
@@ -31,8 +42,30 @@ export default function Chat() {
         <ChatSidebar />
       </div>
 
-      {/* Chat Area — full width on mobile */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+      {/* Mobile Tab Content */}
+      {isMobile && mobileTab !== "chats" && (
+        <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+          {mobileTab === "search" && (
+            <div className="flex-1 flex items-center justify-center">
+              <NewChatDialog />
+            </div>
+          )}
+          {mobileTab === "groups" && (
+            <div className="flex-1 flex items-center justify-center">
+              <NewGroupDialog />
+            </div>
+          )}
+          {mobileTab === "profile" && (
+            <div className="flex-1 flex items-center justify-center">
+              <ProfileDialog />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chat Area — full width on mobile when chats tab is active */}
+      {!(isMobile && mobileTab !== "chats") && (
+        <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         <AnimatePresence mode="wait">
           {chat ? (
             <motion.div
@@ -84,33 +117,58 @@ export default function Chat() {
           )}
         </AnimatePresence>
       </div>
+      )}
 
-      {/* Dialogs */}
-      <AnimatePresence>
-        {showNewChatDialog && <NewChatDialog />}
-        {showNewGroupDialog && <NewGroupDialog />}
-        {showProfileDialog && <ProfileDialog />}
-      </AnimatePresence>
+      {/* Dialogs — only on desktop */}
+      {!isMobile && (
+        <AnimatePresence>
+          {showNewChatDialog && <NewChatDialog />}
+          {showNewGroupDialog && <NewGroupDialog />}
+          {showProfileDialog && <ProfileDialog />}
+        </AnimatePresence>
+      )}
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation — only show when not viewing a chat */}
+      {!(isMobile && activeChatId) && (
       <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#12151e] border-t border-white/5 flex items-center justify-around px-2 z-40">
         <button
-          onClick={() => setActiveChatId(null)}
+          onClick={() => setMobileTab("chats")}
           className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
-            !activeChatId ? "text-blue-400" : "text-slate-400 hover:text-white"
+            mobileTab === "chats" ? "text-blue-400" : "text-slate-400 hover:text-white"
           }`}
         >
           <MessageSquare className="w-5 h-5" />
           <span className="text-xs font-medium">Chats</span>
         </button>
         <button
-          onClick={() => setShowProfileDialog(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-slate-400 hover:text-white transition-colors"
+          onClick={() => setMobileTab("search")}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
+            mobileTab === "search" ? "text-blue-400" : "text-slate-400 hover:text-white"
+          }`}
+        >
+          <Search className="w-5 h-5" />
+          <span className="text-xs font-medium">Search</span>
+        </button>
+        <button
+          onClick={() => setMobileTab("groups")}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
+            mobileTab === "groups" ? "text-blue-400" : "text-slate-400 hover:text-white"
+          }`}
+        >
+          <Users className="w-5 h-5" />
+          <span className="text-xs font-medium">Groups</span>
+        </button>
+        <button
+          onClick={() => setMobileTab("profile")}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
+            mobileTab === "profile" ? "text-blue-400" : "text-slate-400 hover:text-white"
+          }`}
         >
           <User className="w-5 h-5" />
           <span className="text-xs font-medium">Profile</span>
         </button>
       </div>
+      )}
     </div>
   );
 }

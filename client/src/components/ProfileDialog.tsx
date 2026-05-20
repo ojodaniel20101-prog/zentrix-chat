@@ -1,6 +1,6 @@
 // Profile Dialog — View and edit user profile
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Camera, Loader2, Check, Edit2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,22 +9,34 @@ import { uploadAvatar } from "@/lib/storage";
 import { updateProfile } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function ProfileDialog() {
   const { user, profile, updateUserProfile } = useAuth();
   const { setShowProfileDialog } = useChat();
+  const isMobile = useIsMobile();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [displayName, setDisplayName] = useState(profile?.displayName || "");
+  const [username, setUsername] = useState(profile?.username || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Update local state when profile changes
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.displayName || "");
+      setUsername(profile.username || "");
+      setBio(profile.bio || "");
+    }
+  }, [profile, editing]);
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      await updateUserProfile({ displayName, bio });
+      await updateUserProfile({ displayName, username, bio });
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName });
       }
@@ -55,7 +67,8 @@ export default function ProfileDialog() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className={`${isMobile ? "w-full h-full" : "fixed inset-0 z-50"} flex items-center justify-center p-4`}>
+      {!isMobile && (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -63,12 +76,13 @@ export default function ProfileDialog() {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setShowProfileDialog(false)}
       />
+      )}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-        className="relative w-full max-w-sm bg-[#12151e] border border-white/10 rounded-2xl p-6 shadow-2xl z-10"
+        className={`relative w-full ${isMobile ? "h-full max-w-none rounded-none" : "max-w-sm rounded-2xl"} bg-[#12151e] border ${isMobile ? "border-0" : "border-white/10"} p-6 shadow-2xl z-10 overflow-y-auto`}
       >
         <div className="flex items-center justify-between mb-6">
           <h2
@@ -86,19 +100,28 @@ export default function ProfileDialog() {
                 <Edit2 className="w-4 h-4" />
               </button>
             )}
-            <button
-              onClick={() => setShowProfileDialog(false)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {isMobile ? (
+              <button
+                onClick={() => setShowProfileDialog(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowProfileDialog(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Avatar */}
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center mb-6 mt-4">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/10">
+            <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/10 flex-shrink-0">
               {profile?.photoURL ? (
                 <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -133,14 +156,26 @@ export default function ProfileDialog() {
         </div>
 
         {/* Profile info */}
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           <div>
             <label className="text-slate-400 text-xs mb-1 block" style={{ fontFamily: "'DM Sans', sans-serif" }}>
               Username
             </label>
-            <div className="px-4 py-2.5 bg-white/5 rounded-xl border border-white/10">
-              <span className="text-white font-mono text-sm">@{profile?.username}</span>
-            </div>
+            {editing ? (
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-mono">@</span>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-7 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors font-mono"
+                  style={{ fontFamily: "'DM Sans', sans-serif" }}
+                />
+              </div>
+            ) : (
+              <div className="px-4 py-2.5 bg-white/5 rounded-xl border border-white/10">
+                <span className="text-white font-mono text-sm">@{profile?.username}</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -197,11 +232,12 @@ export default function ProfileDialog() {
           </div>
 
           {editing && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2">
               <button
                 onClick={() => {
                   setEditing(false);
                   setDisplayName(profile?.displayName || "");
+                  setUsername(profile?.username || "");
                   setBio(profile?.bio || "");
                 }}
                 className="flex-1 py-2.5 bg-white/5 text-slate-300 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
@@ -221,6 +257,18 @@ export default function ProfileDialog() {
             </div>
           )}
         </div>
+        
+        {isMobile && !editing && (
+          <div className="flex gap-2 pt-4 mt-4 border-t border-white/5">
+            <button
+              onClick={() => setShowProfileDialog(false)}
+              className="flex-1 py-2.5 bg-white/5 text-slate-300 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
+              Close
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );
